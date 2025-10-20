@@ -1,6 +1,8 @@
 import { Console } from "@woowacourse/mission-utils";
 
 const DEFAULT_DIVIDER = [",", ":"];
+const NEW_DIVIDER_SYNTAX_CHAR = ["/", "\\", "n"];
+
 class App {
   _isNaN(value, onNotANumber) {
     const isNotANumber = isNaN(value);
@@ -22,7 +24,9 @@ class App {
 
     // 공통 예외처리 함수
     const exceptionFunc = () => {
-      console.error("입력한 값이 숫자가 아닙니다. 프로그램을 종료합니다.");
+      console.error(
+        "[ERROR] 입력한 값이 숫자가 아닙니다. 프로그램을 종료합니다."
+      );
       process.exit();
     };
 
@@ -30,10 +34,46 @@ class App {
     let calcResult = 0;
     let numberMemory = ""; // string으로 누적하도록 수정
 
+    // 2가 되면 `isNewDivider` flag 변수를 활성화 시킨다.
+    let newDividerActivateCount = 0;
+    let newDividerDeActivateFlag = 0; // 이전 char가 '\'여야 함을 분기하기 위해 사용하는 변수다.
     charsOfUserInput.forEach((char, i) => {
-      const isDivider = DEFAULT_DIVIDER.includes(char);
+      let newDivider = "";
+      let isNewDivider = false;
+      const isDivider = isNewDivider
+        ? isNewDivider === char
+        : DEFAULT_DIVIDER.includes(char);
       const isDigit = /[0-9]/.test(char);
 
+      console.log("isNewDivider :>> ", isNewDivider);
+      // 새로운 divider를 저장
+      if (isNewDivider) {
+        newDivider += char;
+        console.log(`store new divider ${newDivider}`);
+        return;
+      }
+
+      // new divider를 위한 char별 분기 로직
+      if (NEW_DIVIDER_SYNTAX_CHAR[1] === char) {
+        newDividerDeActivateFlag = true;
+        return;
+      }
+      if (newDividerDeActivateFlag && NEW_DIVIDER_SYNTAX_CHAR[2] === char) {
+        isNewDivider = false;
+        return;
+      }
+      if (NEW_DIVIDER_SYNTAX_CHAR[0] === char) {
+        if (++newDividerActivateCount == 2) {
+          isNewDivider = true;
+        }
+        return;
+      }
+      if (isNewDivider) {
+        newDivider += char;
+        return;
+      }
+
+      console.log(`isDivider on ${char} :>> `, isDivider);
       // divider일 경우 메모리 숫자 파싱 후 결과에 합산
       if (isDivider) {
         const _num = parseInt(numberMemory || "0", 10);
